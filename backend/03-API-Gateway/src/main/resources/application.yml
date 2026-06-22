@@ -1,0 +1,63 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: 03-API-Gateway
+
+  cloud:
+    gateway:
+      httpclient:
+        connect-timeout: 5000   # 5 seconds to connect
+        response-timeout: 10s   # 10 seconds to wait for a response
+      server:
+        webflux:
+          routes:
+            - id: auth-service
+              uri: lb://02-AUTH-API
+              predicates:
+                - Path=/auth/**
+                
+            - id: user-service
+              uri: lb://04-User-Service-API
+              predicates:
+                - Path=/user/**
+                
+            - id: provider-service
+              uri: lb://05-Provider-Service-API
+              predicates:
+                - Path=/provider/**
+                
+            - id: service-service
+              uri: lb://06-ALL-SERVICES-API
+              predicates:
+                - Path=/services/**
+            
+            - id: booking-service
+              uri: lb://07-Booking-API
+              predicates:
+                  - Path=/booking/**    
+                
+            - id: review-service
+              uri: lb://08-Review-API
+              predicates:
+                  - Path=/reviews/**
+                
+            - id: review-service
+              uri: lb://09-Notification-API
+              predicates:
+                  - Path=/notifications/**
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+      
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+
+jwt:
+  secret: zqPVYdF8Mq3wcshocJaLZV6EkDkEPJ18NhJ/7IHb34U=
+
+  expiration: 550000
