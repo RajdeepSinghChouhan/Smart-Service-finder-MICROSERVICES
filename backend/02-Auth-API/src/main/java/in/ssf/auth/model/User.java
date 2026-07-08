@@ -6,25 +6,37 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
-@Data
 @Entity
-@Table(name="users")
+@Table(name = "users")
+@Data
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique=true,nullable=false)
+    @NotBlank
+    @Size(min = 3, max = 50)
+    @Column(unique = true, nullable = false)
     private String username;
 
-    @Column(nullable=false)
+    @NotBlank
+    @Size(min = 8, max = 100)
+    @Column(nullable = false)
     private String password;
 
-    @Column(nullable=false)
+    @NotBlank
+    @Pattern(regexp = "USER|PROVIDER", message = "Role must be USER or PROVIDER")
+    @Column(nullable = false)
     private String role;
-    
-    private boolean enabled;
+
+    @NotNull
+    private Boolean enabled;
 }
+

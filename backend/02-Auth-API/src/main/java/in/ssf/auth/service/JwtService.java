@@ -7,11 +7,19 @@ import org.springframework.stereotype.Service;
 import in.ssf.auth.dto.AuthResponseDto;
 import in.ssf.auth.dto.LoginRequestDto;
 import in.ssf.auth.dto.RegisterRequestDto;
+import in.ssf.auth.dto.RegisterResponseDto;
+import in.ssf.auth.exception.AccountDisabled;
+import in.ssf.auth.exception.InvalidCredentials;
+import in.ssf.auth.exception.UserAlreadyExist;
+import in.ssf.auth.exception.UserNotFound;
 import in.ssf.auth.model.User;
 import in.ssf.auth.repo.UserRepository;
 import in.ssf.auth.util.JwtUtil;
+import in.ssf.event.dto.UserRegisteredEvent;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
+@Slf4j
 public class JwtService {
 
 	@Autowired
@@ -20,11 +28,21 @@ public class JwtService {
 	@Autowired
 	private PasswordEncoder passwordEncoder;
 	
+	 @Autowired
+	 private KafkaProducer producer;
+	
 	@Autowired
 	private UserRepository userRepo;
 	
-	public String register(RegisterRequestDto request)
+	public RegisterResponseDto register(RegisterRequestDto request)
 	{
+		if(userRepo.findByUsername(request.getUsername()).isPresent())
+		{
+			throw new UserAlreadyExist("User already exists");
+		}
+		
+		log.info("Registering the User whose username {} ", request.getUsername());
+		
 		User user = new User();
 		user.setUsername(request.getUsername());
 		user.setPassword(
@@ -33,31 +51,41 @@ public class JwtService {
 		user.setEnabled(true);
 		user.setRole(request.getRole());
 
-		if(userRepo.findByUsername(request.getUsername()).isPresent())
-		{
-		    throw new RuntimeException("Username already exists");
-		}
-		userRepo.save(user);
 		
-		return "Registered";
+		User savedUser = userRepo.save(user);
+
+		//Kafka event generating to save user service details just after registration 
+		UserRegisteredEvent event = new UserRegisteredEvent();
+		event.setUserId(savedUser.getId());
+		event.setUsername(savedUser.getUsername());
+		event.setRole(savedUser.getRole());
+
+		producer.publish(event);
+        
+		RegisterResponseDto response = new RegisterResponseDto();
+		response.setUsername(user.getUsername());
+		response.setRole(user.getRole());
+		
+		return response;
 	}
 	
 	
 	public AuthResponseDto login(LoginRequestDto request)
 	{
-		System.out.println("comes inside method login sevice with username  = "+request.getUsername());
+		
+		log.info("Validating User whose username {} ", request.getUsername());
 		
 		User user = (User) userRepo.findByUsername(request.getUsername())
 	            .orElseThrow(() ->
-                new RuntimeException("User not found"));
+                new UserNotFound("User not found"));
 		
-		if(!user.isEnabled())
+		if(!user.getEnabled())
 		{
-		    throw new RuntimeException("Account disabled");
+		    throw new AccountDisabled("Account disabled");
 		}
 		
-		System.out.println("User is valid username == "+user.getUsername());
-	
+		log.info("User is valid whose username is {}",user.getUsername());
+		
 		boolean isMatch = passwordEncoder.matches(
 	            request.getPassword(),
 	            user.getPassword()
@@ -71,7 +99,7 @@ public class JwtService {
 		 }
 		 else
 		 {
-			 throw new RuntimeException("Invalid Credentials");
+			 throw new InvalidCredentials("Invalid Username or Password");
 		 }
 	}
 }

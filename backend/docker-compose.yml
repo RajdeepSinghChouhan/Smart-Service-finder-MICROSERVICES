@@ -1,0 +1,294 @@
+
+services:
+
+  mysql:
+    image: mysql:8.4
+    container_name: mysql
+    restart: always
+    ports:
+      - "3306:3306"
+
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+    networks:
+      - movie-network
+
+
+  kafka:
+    image: apache/kafka:latest
+    container_name: kafka
+
+    restart: unless-stopped
+
+    ports:
+      - "9092:9092"
+
+    environment:
+      CLUSTER_ID: 9N5Dvw46QoW46e0LrMn-_g
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+
+    networks:
+      - movie-network
+
+
+
+  eureka-server:
+
+    restart: unless-stopped
+
+    build:
+      context: ./01-Service-Registry_Eureka
+
+    container_name: eureka-server
+
+    ports:
+      - "8761:8761"
+
+    networks:
+      - movie-network
+
+
+
+  config-server:
+
+    restart: unless-stopped
+
+    build:
+      context: ./10-Config-Server
+    environment:
+      GIT_REPO_URL: ${GIT_REPO_URL}
+      GIT_USERNAME: ${GIT_USERNAME}
+      GIT_PASSWORD: ${GIT_PASSWORD}
+    container_name: config-server
+
+    ports:
+      - "8888:8888"
+
+    depends_on:
+      - eureka-server
+
+    networks:
+      - movie-network
+
+
+
+  api-gateway:
+
+    build:
+      context: ./03-API-Gateway
+    environment:
+      JWT_SECRET: ${JWT_SECRET} 
+      JWT_EXPIRATION: ${JWT_EXPIRATION}
+
+    container_name: api-gateway
+  
+    restart: unless-stopped
+
+    ports:
+      - "8080:8080"
+
+    depends_on:
+      - config-server
+      - eureka-server
+    networks:
+      - movie-network
+
+
+
+  auth-api:
+
+    build:
+      context: ./02-Auth-API
+
+    environment:
+      JWT_SECRET: ${JWT_SECRET} 
+      JWT_EXPIRATION: ${JWT_EXPIRATION}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+
+    container_name: auth-api
+    restart: unless-stopped
+  
+    depends_on:
+      - mysql
+      - config-server
+      - eureka-server
+
+    networks:
+      - movie-network
+
+
+  user-service-api:
+
+    build:
+      context: ./04-User-Service-API
+
+    environment:
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+
+    container_name: user-service-api
+    restart: unless-stopped
+
+    depends_on:
+      - mysql
+      - config-server
+      - eureka-server
+
+    networks:
+      - movie-network
+
+
+  provider-service-api:
+
+    build:
+      context: ./05-Provider-Service-API
+
+    environment:
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD} 
+    container_name: provider-service-api
+    restart: unless-stopped
+
+    depends_on:
+      - mysql
+      - config-server
+      - eureka-server
+
+    networks:
+      - movie-network  
+
+
+  all-services-api:
+
+    build:
+      context: ./06-All-Services-API
+
+    environment:
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+    container_name: all-services-api
+
+    restart: unless-stopped
+    depends_on:
+      - mysql
+      - config-server
+      - eureka-server
+
+    networks:
+      - movie-network
+
+
+
+  booking-api:
+
+    restart: unless-stopped
+
+    build:
+      context: ./07-Booking-API
+
+    environment:
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD} 
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_TOPIC_NAME: Booking-Topic
+      KAFKA_GROUP_ID: booking-group
+      
+    container_name: booking-api
+
+    depends_on:
+      - mysql
+      - kafka
+      - config-server 
+      - eureka-server
+
+    networks:
+      - movie-network
+
+
+  review-api:
+
+    restart: unless-stopped
+
+    environment:
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD} 
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_TOPIC_NAME: Review-Topic
+      KAFKA_GROUP_ID: review-group
+
+    build:
+      context: ./08-Review-API
+
+    container_name: review-api
+
+    depends_on:
+      - mysql
+      - kafka
+      - config-server 
+      - eureka-server
+
+    networks:
+      - movie-network
+
+
+  notification-api:
+
+    restart: unless-stopped
+
+    build:
+      context: ./09-Notification-API
+
+    environment:
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_TOPIC_NAME: Notification-Topic
+      KAFKA_GROUP_ID: notification-group
+
+    container_name: notification-api
+
+    depends_on:
+      - kafka
+      - mysql
+      - config-server
+      - eureka-server
+
+    networks:
+      - movie-network
+
+
+
+volumes:
+
+  mysql-data:
+  kafka-data:
+
+
+
+networks:
+
+  movie-network:

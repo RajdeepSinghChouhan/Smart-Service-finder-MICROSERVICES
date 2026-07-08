@@ -1,0 +1,25 @@
+package in.ssf.event.dto;
+
+
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import lombok.Data;
+
+@Data
+public class ReviewRequest {
+
+    @NotNull
+    private Long serviceId;
+
+    @NotNull
+    @Min(1)
+    @Max(5)
+    private Integer rating;
+
+    @NotBlank
+    @Size(min = 5, max = 500)
+    private String comment;
+}

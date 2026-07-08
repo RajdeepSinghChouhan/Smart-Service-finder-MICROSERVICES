@@ -5,21 +5,30 @@ import java.security.Key;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
 @Component
-public class JwtUtil {
-
-    
+public class JwtUtil 
+{   
 	@Value("${jwt.secret}")
     private String secretKey;
 
-    @Value("${jwt.expiration}")
-    private long expirationTime;
-
-    private Key getSigningKey() {
+    private Key getSigningKey() 
+    {
         return Keys.hmacShaKeyFor(secretKey.getBytes());
+    }
+    
+    // Parse token only once
+    public Claims extractClaims(String token) 
+    {
+        return Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
     }
 
 	//validate Token
@@ -29,56 +38,51 @@ public class JwtUtil {
 			Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(token);	
 			return true;
 		}
-		catch(Exception e)
+		catch (JwtException e)
 		{
-			e.printStackTrace();
+		    return false;
 		}
-		return false;
+		catch (IllegalArgumentException e)
+		{
+		    return false;
+		}
 	}
 	
 	//extract user name from token
 	public String extractUsername(String token)
 	{
-		try {
-			return Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(token)
-				.getBody()
-				.getSubject();
-		}
-		catch(Exception e)
-		{
-			e.printStackTrace();
-			return null;
-		}
+		return extractClaims(token).getSubject();
 	}
 	
 	//extract role from token
 	public String extractRole(String token)
 	{
 		try {
-			return Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(token)
-				.getBody()
-				.get("role",String.class);
+			return extractClaims(token).get("role",String.class);
 		}
-		catch(Exception e)
+		catch (JwtException e)
 		{
-			e.printStackTrace();
-			return null;
+		    return null;
+		}
+		catch (IllegalArgumentException e)
+		{
+		    return null;
 		}
 	}
 	
 	//extract userId from token
-		public Long extractUserId(String token)
-		{
-			try {
-				return Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(token)
-					.getBody()
-					.get("userId",Long.class);
-			}
-			catch(Exception e)
-			{
-				e.printStackTrace();
-				return null;
-			}
+	public Long extractUserId(String token)
+	{
+		try {
+			return extractClaims(token).get("userId",Long.class);
 		}
+		catch (JwtException e)
+		{
+		    return null;
+		}
+		catch (IllegalArgumentException e)
+		{
+		    return null;
+		}
+	}
 }
-
