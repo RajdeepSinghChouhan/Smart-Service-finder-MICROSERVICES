@@ -15,6 +15,8 @@ import lombok.Setter;
 public class BookingCreatedEvent {
 
     private Long bookingId;
+    
+    private Long providerId;
 
     private Long userId;
 

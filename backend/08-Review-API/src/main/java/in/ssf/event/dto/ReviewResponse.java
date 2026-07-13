@@ -12,6 +12,10 @@ public class ReviewResponse
     private Long reviewId;
 
     private Long userId;
+    
+    private String userEmail;
+    
+    private String username;
 
     private Long providerId;
 
@@ -21,5 +25,9 @@ public class ReviewResponse
 
     private String comment;
 
+    private String serviceTitle;
+    
+    private Double servicePrice;
+    
     private LocalDateTime createdAt;
 }

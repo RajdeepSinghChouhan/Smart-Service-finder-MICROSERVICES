@@ -9,6 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import in.ssf.allServices.client.ProviderServiceClient;
 import in.ssf.allServices.dto.AllServiceDto;
+import in.ssf.allServices.dto.AllServiceResponseDto;
+import in.ssf.allServices.dto.ProviderServiceDto;
 import in.ssf.allServices.exception.ProviderServiceUnavailableException;
 import in.ssf.allServices.exception.ServiceNotFoundException;
 import in.ssf.allServices.model.AllService;
@@ -22,11 +24,11 @@ public class AllServiceService {
 
 	@Autowired
 	private AllServicesRepo serviceRepo;
-
+	
 	@Autowired
 	private ProviderServiceClient providerServiceClient;
 	
-	public AllServiceDto saveService(AllServiceDto dto,Long userId)
+	public AllServiceResponseDto saveService(AllServiceDto dto,Long userId)
 	{
 		Long providerId = getProviderId(userId);
 		
@@ -39,24 +41,24 @@ public class AllServiceService {
 		
 		AllService save = serviceRepo.save(entity);
 		
-		AllServiceDto dto1 = mapObjectToDto(save);
+		AllServiceResponseDto dto1 = mapObjectToDto(save);
 		
 		return dto1;
 	}
 	
 	
-	public List<AllServiceDto> getAllService()
+	public List<AllServiceResponseDto> getAllService()
 	{
 		log.info("Getting All Services");
 		
 		
 		List<AllService> all = serviceRepo.findAll();
 		
-		List<AllServiceDto> dtoList = new ArrayList<>();
+		List<AllServiceResponseDto> dtoList = new ArrayList<>();
 		
 		for(AllService service : all)
 		{
-			AllServiceDto dto = mapObjectToDto(service);
+			AllServiceResponseDto dto = mapObjectToDto(service);
 			dtoList.add(dto);
 		}
 		
@@ -68,7 +70,7 @@ public class AllServiceService {
 		return dtoList; 
 	}
 	
-	public List<AllServiceDto> getAllServiceOfProvider(Long userId)
+	public List<AllServiceResponseDto> getAllServiceOfProvider(Long userId)
 	{
 		Long providerId = getProviderId(userId);
 		
@@ -76,19 +78,18 @@ public class AllServiceService {
 		
 		List<AllService> all = serviceRepo.findAllByProviderId(providerId);
 		
-		List<AllServiceDto> dtoList = new ArrayList<>();
+		List<AllServiceResponseDto> dtoList = new ArrayList<>();
 		
 		for(AllService service : all)
 		{
-			AllServiceDto dto = mapObjectToDto(service);
+			AllServiceResponseDto dto = mapObjectToDto(service);
 			dtoList.add(dto);
 		}
-		
 		
 		return dtoList;
 	}
 	
-	public AllServiceDto getServiceById(Long serviceId)
+	public AllServiceResponseDto getServiceById(Long serviceId)
 	{
 		AllService service = serviceRepo.findById(serviceId).orElseThrow(
 				()-> new ServiceNotFoundException("Service Not Found for serviceId = "+serviceId));
@@ -99,55 +100,69 @@ public class AllServiceService {
 	}
 	
 	@Transactional
-	public AllServiceDto updateServiceById(Long serviceId,AllServiceDto request)
+	public AllServiceResponseDto updateServiceById(Long serviceId,AllServiceDto request)
 	{
 		log.info("Update Service Details By ServiceID {}",serviceId);
+		
+		AllService object = mapDtoToObject(request);
 		
 		AllService service = serviceRepo.findById(serviceId).orElseThrow(
 				()-> new ServiceNotFoundException("Service Not Found for serviceId = "+serviceId));
 		
-		if(request.getAvailable()!=null)
-			service.setAvailable(request.getAvailable());
+		if(object.getAvailable()!=null)
+			service.setAvailable(object.getAvailable());
 		
-		if(request.getDescription()!=null)
-			service.setDescription(request.getDescription());
+		if(object.getDescription()!=null)
+			service.setDescription(object.getDescription());
 		
-		if(request.getPrice()!=null)
-			service.setPrice(request.getPrice());
+		if(object.getPrice()!=null)
+			service.setPrice(object.getPrice());
 		
-		if(request.getTitle()!=null)
-			service.setTitle(request.getTitle());
+		if(object.getTitle()!=null)
+			service.setTitle(object.getTitle());
 		
 		serviceRepo.save(service);
+		
+		AllServiceResponseDto dto = mapObjectToDto(object);
 			
-		return request;
+		return dto;
 	}
 	
 	@Transactional
-	public AllServiceDto deleteServiceById(Long serviceId)
+	public AllServiceResponseDto deleteServiceById(Long serviceId)
 	{
 		log.info("Deleting Service of serviceId {}",serviceId);
 		
 		AllService service = serviceRepo.findById(serviceId)
 		        .orElseThrow(() -> new ServiceNotFoundException("Service not found"));
-
+		
 		serviceRepo.delete(service);
 		
 		return mapObjectToDto(service);
 		
 	}
 	
-	public AllServiceDto mapObjectToDto(AllService service)
+	public AllServiceResponseDto mapObjectToDto(AllService service)
 	{
-		AllServiceDto dto = new AllServiceDto();
-		dto.setId(service.getId());
-		dto.setAvailable(service.getAvailable());
-		dto.setCategoryId(service.getCategoryId());
-		dto.setCreatedAt(service.getCreatedAt());
-		dto.setDescription(service.getDescription());
-		dto.setPrice(service.getPrice());
+		ProviderServiceDto providerDto = providerServiceClient.getProviderDetailsById(service.getProviderId());
+		
+		AllServiceResponseDto dto = new AllServiceResponseDto();
+		
+		
+		
+		dto.setServiceId(service.getId());
 		dto.setProviderId(service.getProviderId());
+		dto.setProviderUserId(providerDto.getUserId());
+		dto.setBusinessName(providerDto.getBusinessName());
+		dto.setDescription(providerDto.getDescription());
+		dto.setExperience(providerDto.getExperience());
+		dto.setCategoryId(providerDto.getCategoryId());
+		dto.setRating(providerDto.getRating());
+		dto.setVerified(providerDto.getVerified());
 		dto.setTitle(service.getTitle());
+		dto.setPrice(service.getPrice());
+		dto.setAvailable(service.getAvailable());
+		dto.setCreatedAt(service.getCreatedAt());
 		return dto;
 	}
 	

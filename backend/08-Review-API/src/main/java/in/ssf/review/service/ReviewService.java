@@ -13,7 +13,10 @@ import org.springframework.transaction.annotation.Transactional;
 import in.ssf.event.dto.ReviewCreatedEvent;
 import in.ssf.event.dto.ReviewRequest;
 import in.ssf.event.dto.ReviewResponse;
+import in.ssf.event.dto.ServiceDto;
+import in.ssf.event.dto.UserDto;
 import in.ssf.review.client.ServiceClient;
+import in.ssf.review.client.UserClient;
 import in.ssf.review.exception.AllServiceUnavailableException;
 import in.ssf.review.exception.RatingNotInRange;
 import in.ssf.review.exception.ReviewAlreadyExist;
@@ -35,7 +38,10 @@ public class ReviewService
 	
 	@Autowired
     private  ServiceClient serviceClient;
-
+	
+	@Autowired
+    private  UserClient usercleint;
+	
     public ReviewResponse createReview(Long userId,ReviewRequest request)
     {
     		
@@ -88,20 +94,28 @@ public class ReviewService
 		            ex.printStackTrace();
 		        }
 		 });
+        
+        ServiceDto dto =
+                serviceClient.getServiceById(
+                        save.getServiceId());
+        
+        UserDto userDto = usercleint.getUserById(userId);
 
-        return map(save);
+        return map(save,dto,userDto);
     }
 
-    private ReviewResponse map(
-            Review review)
-    {
-    		
+    private ReviewResponse map(Review review,ServiceDto dto, UserDto userDto)
+    {	
         return ReviewResponse.builder()
                 .reviewId(review.getReviewId())
                 .userId(review.getUserId())
+                .userEmail(userDto.getEmail())
+                .username(userDto.getUsername())
                 .providerId(review.getProviderId())
                 .serviceId(review.getServiceId())
+                .serviceTitle(dto.getTitle())
                 .rating(review.getRating())
+                .servicePrice(dto.getPrice())
                 .comment(review.getComment())
                 .createdAt(review.getCreatedAt())
                 .build();
@@ -116,7 +130,13 @@ public class ReviewService
 	    	List<ReviewResponse> list = new ArrayList<>();
 	    	for(Review review : byProviderId)
 	    	{
-	    		ReviewResponse map = map(review);
+	    		ServiceDto dto =
+		                serviceClient.getServiceById(
+		                        review.getServiceId());
+	    		
+	    		UserDto userDto = usercleint.getUserById(review.getUserId());
+	    		
+	    		ReviewResponse map = map(review,dto,userDto);
 	    		list.add(map);
 	    	}
 	    	return list;
@@ -130,7 +150,13 @@ public class ReviewService
 	    	List<ReviewResponse> list = new ArrayList<>();
 	    	for(Review review : byUserId)
 	    	{
-	    		ReviewResponse map = map(review);
+	    		ServiceDto dto =
+                serviceClient.getServiceById(
+                        review.getServiceId());
+	    		
+	    		UserDto userDto = usercleint.getUserById(userId);
+	    		
+	    		ReviewResponse map = map(review,dto,userDto);
 	    		list.add(map);
 	    	}
 	    	return list;
@@ -144,7 +170,15 @@ public class ReviewService
 	    	List<ReviewResponse> list = new ArrayList<>();
 	    	for(Review review : byServiceId)
 	    	{
-	    		ReviewResponse map = map(review);
+	    		ServiceDto dto =
+		                serviceClient.getServiceById(
+		                        review.getServiceId());
+	    		
+	    		
+	    		UserDto userDto = usercleint.getUserById(review.getUserId());
+	    		
+	    		
+	    		ReviewResponse map = map(review,dto,userDto);
 	    		list.add(map);
 	    	}
 	    	return list;
@@ -197,7 +231,13 @@ public class ReviewService
 	    		throw new ReviewNotFound("No Review Match To Update ");
 	    	}
     	
-		return map(editedReview);
+	    	ServiceDto dto =
+	                serviceClient.getServiceById(
+	                		editedReview.getServiceId());
+	    	
+	    	UserDto userDto = usercleint.getUserById(userId);
+	    	
+		return map(editedReview,dto,userDto);
     }
     
     //Delete Review
@@ -214,13 +254,12 @@ public class ReviewService
 	    	{
 	    		throw new ReviewNotFound("No Review Match To Delete");
 	    	}
+	    	Long providerId = review.getProviderId();
 	    	
 	    	repository.delete(review);
 	    	
-	    	Review save = repository.save(review);
-	           
         ReviewCreatedEvent event = ReviewCreatedEvent.builder()
-                .providerId(save.getProviderId())
+                .providerId(providerId)
                 .userId(userId)
                 .title("Review Deleted")
                 .message("Your Review is successful Deleted")

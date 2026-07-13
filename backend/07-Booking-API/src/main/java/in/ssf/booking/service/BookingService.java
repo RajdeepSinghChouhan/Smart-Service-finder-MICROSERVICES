@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import in.ssf.booking.client.ProviderClient;
 import in.ssf.booking.client.ServiceClient;
+import in.ssf.booking.client.UserClient;
 import in.ssf.booking.enums.BookingStatusEnum;
 import in.ssf.booking.exception.AllServiceUnavailableException;
 import in.ssf.booking.exception.BookingNotFound;
@@ -19,6 +20,8 @@ import in.ssf.booking.repo.BookingRepo;
 import in.ssf.event.dto.BookingCreatedEvent;
 import in.ssf.event.dto.BookingRequestDto;
 import in.ssf.event.dto.BookingResponseDto;
+import in.ssf.event.dto.ServiceDto;
+import in.ssf.event.dto.UserDto;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.extern.slf4j.Slf4j;
 
@@ -38,6 +41,9 @@ public class BookingService {
 	@Autowired
 	private ProviderClient providerClient;
 	
+	@Autowired
+	private UserClient userClient;
+	
 	
 	public BookingResponseDto  addBooking(BookingRequestDto request,Long userId)
 	{
@@ -48,9 +54,7 @@ public class BookingService {
 		bookingFromDto.setUserId(userId);
 		bookingFromDto.setStatus(BookingStatusEnum.PENDING);
 
-		Long providerId = getProviderIdByServiceClient(request.getServiceId());
-
-		bookingFromDto.setProviderId(providerId);
+		bookingFromDto.setProviderId(request.getProviderId());
 		
 		//dto to object
 
@@ -60,6 +64,7 @@ public class BookingService {
 		        BookingCreatedEvent.builder()
 		                .bookingId(booking.getId())
 		                .userId(userId)
+		                .providerId(booking.getProviderId())
 		                .title("Booking Confirmed")
 		                .message("Your booking has been confirmed.")
 		                .build();
@@ -101,6 +106,7 @@ public class BookingService {
 		BookingCreatedEvent event =
 		        BookingCreatedEvent.builder()
 		                .bookingId(updatedBooking.getId())
+		                .providerId(updatedBooking.getProviderId())
 		                .userId(userId)
 		                .title("Booking Updated")
 		                .message("Your booking has been Updated.")
@@ -157,6 +163,8 @@ public class BookingService {
 	
 	public List<BookingResponseDto> getBookingOfProvider(Long userId)
 	{
+		log.info("trying to find provider id by user id.. user id = {} ",userId);
+		
 	    Long providerId = getProviderIdByProviderClient(userId);
 
 	    log.info("Getting All Bookings Of Provider By ProviderId {}",providerId);
@@ -233,6 +241,7 @@ public class BookingService {
 		BookingCreatedEvent event =
 		        BookingCreatedEvent.builder()
 		                .bookingId(booking.getId())
+		                .providerId(save.getProviderId())
 		                .userId(save.getUserId())
 		                .title(title)
 		                .message(message)
@@ -250,7 +259,8 @@ public class BookingService {
 	}
 	
 	
-	public Booking mapRequestDtoToObject(BookingRequestDto dto) {
+	public Booking mapRequestDtoToObject(BookingRequestDto dto) 
+	{
 
 		 if (dto == null) {
 		        return null;
@@ -266,7 +276,8 @@ public class BookingService {
 	    return booking;
 	}
 	
-	public BookingResponseDto mapObjectToResponseDto(Booking booking) {
+	public BookingResponseDto mapObjectToResponseDto(Booking booking) 
+	{
 
 		 if (booking == null) {
 		        return null;
@@ -277,12 +288,30 @@ public class BookingService {
 	    dto.setUserId(booking.getUserId());
 	    dto.setProviderId(booking.getProviderId());
 	    dto.setServiceId(booking.getServiceId());
+	    
+	    ServiceDto service =
+	            serviceClient.getServiceById(booking.getServiceId());
+	    
+	   UserDto userDto = userClient.getUserById(dto.getUserId());
+	   
+	   log.info("===============================USERNAME IS = "+dto.getUsername()+"======================================");
+	   log.info("===============================USERNAME IS = "+dto.getUsername()+"======================================");
+	   log.info("===============================USERNAME IS = "+dto.getUsername()+"======================================");
+	   log.info("===============================USERNAME IS = "+dto.getUsername()+"======================================");
+	   log.info("===============================USERNAME IS = "+dto.getUsername()+"======================================");
+	   log.info("===============================USERNAME IS = "+dto.getUsername()+"======================================");
+	   log.info("===============================USERNAME IS = "+dto.getUsername()+"======================================");
+	   log.info("===============================USERNAME IS = "+dto.getUsername()+"======================================");
+	    dto.setServiceTitle(service.getTitle());
+	    dto.setPrice(service.getPrice());
+	    dto.setUserEmail(userDto.getEmail());
+	    dto.setUsername(userDto.getUsername());
 	    dto.setBookingDate(booking.getBookingDate());
 	    dto.setBookingTime(booking.getBookingTime());
 	    dto.setAddress(booking.getAddress());
 	    dto.setNotes(booking.getNotes());
 	    dto.setStatus(booking.getStatus());
-
+	    dto.setCreatedAt(booking.getCreatedAt());
 	    return dto;
 	}
 	
@@ -300,6 +329,7 @@ public class BookingService {
 	@CircuitBreaker(name = "providerService", fallbackMethod = "providerFallback")
 	Long getProviderIdByProviderClient(Long userId)
 	{
+		log.info("Trying to get provider Id By User Id Using ProviderClient");
 		return providerClient.getProviderIdByUserId(userId);
 	}
 	

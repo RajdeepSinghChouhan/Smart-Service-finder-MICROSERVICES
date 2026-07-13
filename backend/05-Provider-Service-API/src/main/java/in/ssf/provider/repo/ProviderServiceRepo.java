@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 import in.ssf.provider.model.ProviderService;
 
 @Repository
-public interface ProviderServiceRepo extends JpaRepository<ProviderService,Integer>{
+public interface ProviderServiceRepo extends JpaRepository<ProviderService,Long>{
 	
 	Optional<ProviderService> findByUserId(Long userId);
 }

@@ -11,6 +11,7 @@ import in.ssf.event.dto.BookingCreatedEvent;
 import in.ssf.event.dto.PasswordResetEvent;
 import in.ssf.event.dto.ReviewCreatedEvent;
 import in.ssf.event.dto.UserDto;
+import in.ssf.notification.client.ProviderClient;
 import in.ssf.notification.client.UserClient;
 import in.ssf.notification.enums.NotificationStatus;
 import in.ssf.notification.enums.NotificationType;
@@ -29,6 +30,9 @@ import lombok.extern.slf4j.Slf4j;
 public class NotificationServiceImpl implements NotificationService {
 
     private final NotificationRepository notificationRepository;
+    
+    private final ProviderClient providerClient;
+    
     private final EmailService emailService;
 
     @Autowired
@@ -41,13 +45,11 @@ public class NotificationServiceImpl implements NotificationService {
     	   // 1. FETCH USER
     		log.info("Handling Booking Created Event For Notification");
     		
-        UserDto user = getUserByIdByUserClient(event.getUserId());
-
-        String email = user.getEmail();
+        UserDto customer = getUserByIdByUserClient(event.getUserId());
         
         Notification notification = Notification.builder()
                 .userId(event.getUserId())
-                .email(email)
+                .email(customer.getEmail())
                 .title(event.getTitle())
                 .message(event.getMessage())
                 .type(NotificationType.EMAIL)
@@ -58,16 +60,43 @@ public class NotificationServiceImpl implements NotificationService {
 
         notificationRepository.save(notification);
 
+        Long providerUserId = providerClient.getUserIdByProviderId(event.getProviderId());
+        
+        UserDto provider = getUserByIdByUserClient(providerUserId);
+        
+        Notification notification1 = Notification.builder()
+                .userId(providerUserId)
+                .email(provider.getEmail())
+                .title(event.getTitle())
+                .message(event.getMessage())
+                .type(NotificationType.EMAIL)
+                .status(NotificationStatus.PENDING)
+                .isRead(false)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        notificationRepository.save(notification1);
+        
         try {
 
             emailService.sendEmail(
-                    email,
+                    customer.getEmail(),
                     event.getTitle(),
                     event.getMessage());
 
+            
+            
+            emailService.sendEmail(
+                    provider.getEmail(),
+                    event.getTitle(),
+                    event.getMessage());
+            
             notification.setStatus(NotificationStatus.SENT);
             notification.setSentAt(LocalDateTime.now());
 
+            notification1.setStatus(NotificationStatus.SENT);
+            notification1.setSentAt(LocalDateTime.now());
+            
         } catch (Exception e) {
 
         		log.error("Failed to process the Notification Sending Request",e);
@@ -77,6 +106,7 @@ public class NotificationServiceImpl implements NotificationService {
         log.info("Notification Saved");
 
         notificationRepository.save(notification);
+        notificationRepository.save(notification1);
     }
     	
     @Override
@@ -101,7 +131,24 @@ public class NotificationServiceImpl implements NotificationService {
                 .build();
 
         notificationRepository.save(notification);
+        
+        Long providerUserId = providerClient.getUserIdByProviderId(event.getProviderId());
+        
+        UserDto provider = getUserByIdByUserClient(providerUserId);
+        
+        Notification notification1 = Notification.builder()
+                .userId(providerUserId)
+                .email(provider.getEmail())
+                .title(event.getTitle())
+                .message(event.getMessage())
+                .type(NotificationType.EMAIL)
+                .status(NotificationStatus.PENDING)
+                .isRead(false)
+                .createdAt(LocalDateTime.now())
+                .build();
 
+        notificationRepository.save(notification1);
+        
         try {
 
             emailService.sendEmail(
@@ -109,8 +156,15 @@ public class NotificationServiceImpl implements NotificationService {
                     event.getTitle(),
                     event.getMessage());
 
+            emailService.sendEmail(
+                    provider.getEmail(),
+                    event.getTitle(),
+                    event.getMessage());
+
             notification.setStatus(NotificationStatus.SENT);
             notification.setSentAt(LocalDateTime.now());
+            notification1.setStatus(NotificationStatus.SENT);
+            notification1.setSentAt(LocalDateTime.now());
 
         } catch (Exception e) {
 
@@ -120,6 +174,7 @@ public class NotificationServiceImpl implements NotificationService {
         log.info("Notification Saved");
 
         notificationRepository.save(notification);
+        notificationRepository.save(notification1);
 
     }
 

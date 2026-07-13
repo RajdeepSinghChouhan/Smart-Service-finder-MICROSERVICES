@@ -21,6 +21,11 @@ public class BookingRequestDto {
     @Positive(message = "Service Id must be greater than 0")
     @Schema(description = "Service Id", example = "401")
     private Long serviceId;
+	
+	@NotNull(message = "Service Id is required")
+    @Positive(message = "Service Id must be greater than 0")
+    @Schema(description = "Service Id", example = "401")
+    private Long providerId;
 
     @NotNull(message = "Booking date is required")
     @FutureOrPresent(message = "Booking date cannot be in the past")

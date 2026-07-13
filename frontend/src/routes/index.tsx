@@ -89,7 +89,7 @@ function HomePage() {
                 <div className="ssf-info-card mt-3" style={{ marginRight: "30%" }}>
                   <div className="d-flex align-items-center justify-content-between">
                     <div>
-                      <small className="text-secondary">Booking confirmed</small>
+                      <small className="text-secondary">Booking Accepted</small>
                       <div className="fw-bold">AC Cleaning ✓</div>
                     </div>
                     <div className="ssf-category-icon" style={{ width: 44, height: 44, marginBottom: 0 }}>

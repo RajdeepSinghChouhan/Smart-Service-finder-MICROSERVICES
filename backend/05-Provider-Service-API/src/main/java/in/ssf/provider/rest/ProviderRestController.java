@@ -1,8 +1,11 @@
 package in.ssf.provider.rest;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -60,5 +63,23 @@ public class ProviderRestController {
 	public Long getProviderIdByUserId(@RequestHeader("X-User-Id") Long userId)
 	{
 		return service.getProviderId(userId);	
+	}
+	
+	@GetMapping("/data/{id}")
+	@Operation(summary = "Get Provider Data By Provider Id")
+	public ProviderServiceDto getProviderDetailsById(@PathVariable Long  id)
+	{
+		return service.getProviderById(id);
+	}
+	
+	@GetMapping("/{providerId}/user-id")
+	public Long getUserIdByProviderId(@PathVariable Long providerId)
+	{
+		return service.getUserId(providerId);
+	}
+	
+	@GetMapping("/all")
+	public List<ProviderServiceDto> getAllProviders() {
+	    return service.getAllProviders();
 	}
 }

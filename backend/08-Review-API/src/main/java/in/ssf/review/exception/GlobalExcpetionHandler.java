@@ -35,13 +35,13 @@ public class GlobalExcpetionHandler {
 
 	    ErrorResponse error = new ErrorResponse(
 	            LocalDateTime.now(),
-	            403,
+	            409,
 	            "Review Already Exist",
 	            ex.getMessage(),
 	            request.getRequestURI()
 	    );
 
-	    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+	    return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
 	}
 	
 	@ExceptionHandler(RatingNotInRange.class)

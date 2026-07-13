@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import in.ssf.allServices.dto.AllServiceDto;
+import in.ssf.allServices.dto.AllServiceResponseDto;
 import in.ssf.allServices.model.AllService;
 import in.ssf.allServices.service.AllServiceService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,42 +34,42 @@ public class AllServiceRestController {
 	
 	@PostMapping("/data")
 	@Operation(summary = "Save Services Data")
-	public AllServiceDto saveServiceData(@Valid @RequestBody AllServiceDto service,@RequestHeader("X-User-Id") Long userId)
+	public AllServiceResponseDto saveServiceData(@Valid @RequestBody AllServiceDto service,@RequestHeader("X-User-Id") Long userId)
 	{
 		return allservice.saveService(service,userId);
 	}
 	
 	@GetMapping("/data")
 	@Operation(summary = "Get All Services")
-	public List<AllServiceDto> getAllService()
+	public List<AllServiceResponseDto> getAllService()
 	{
 		return allservice.getAllService();	
 	}
 	
 	@GetMapping("/data/my-services")
 	@Operation(summary = "Get Services Of Provider")
-	public List<AllServiceDto> getAllServiceOfProvider(@RequestHeader("X-User-Id") Long userId)
+	public List<AllServiceResponseDto> getAllServiceOfProvider(@RequestHeader("X-User-Id") Long userId)
 	{
 		return allservice.getAllServiceOfProvider(userId);
 	}
 	
 	@GetMapping("/data/{serviceId}")
 	@Operation(summary = "Get Service By ServiceId")
-	public AllServiceDto getServiceById(@PathVariable Long serviceId)
+	public AllServiceResponseDto getServiceById(@PathVariable Long serviceId)
 	{
 		return allservice.getServiceById(serviceId);
 	}
 	
 	@PutMapping("/data/{serviceId}")
 	@Operation(summary = "Update Service By ServiceId")
-	public AllServiceDto updateServiceById(@PathVariable Long serviceId, @Valid @RequestBody AllServiceDto service)
+	public AllServiceResponseDto updateServiceById(@PathVariable Long serviceId, @Valid @RequestBody AllServiceDto service)
 	{
 		return allservice.updateServiceById(serviceId,service);
 	}
 	
 	@DeleteMapping("/data/{serviceId}")
 	@Operation(summary = "Delete Service Data By ServiceId")
-	public AllServiceDto deleteServiceById(@PathVariable Long serviceId)
+	public AllServiceResponseDto deleteServiceById(@PathVariable Long serviceId)
 	{
 		return allservice.deleteServiceById(serviceId);
 	}
@@ -77,7 +78,7 @@ public class AllServiceRestController {
 	@Operation(summary = "Get ProviderId By ServiceId")
 	public Long getProviderIdByServiceId(@PathVariable Long serviceId)
 	{
-	    AllServiceDto serviceById = allservice.getServiceById(serviceId);
+		AllServiceResponseDto serviceById = allservice.getServiceById(serviceId);
 
 	    return serviceById.getProviderId();
 	}

@@ -37,7 +37,7 @@ public class ProviderService {
     private String experience;
 
     @Generated
-    private Integer categoryId;
+    private Long categoryId;
 
     @Column(nullable = false)
     private Double rating = 0.0;

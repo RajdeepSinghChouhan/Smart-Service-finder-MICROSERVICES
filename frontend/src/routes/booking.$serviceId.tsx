@@ -1,24 +1,27 @@
 import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Calendar, Clock, MapPin, StickyNote, ArrowLeft, CheckCircle2, XCircle, Star } from "lucide-react";
 import ConfirmModal from "../components/ConfirmModal";
 import { useAuth } from "../context/AuthContext";
 import { bookingApi } from "../api/bookingApi";
-import { services, providers } from "../data/mock";
+import { providerApi } from "../api/providerApi";
+import { serviceApi } from "../api/serviceApi";
+import { reviewApi } from "@/api/reviewApi";
 
 export const Route = createFileRoute("/booking/$serviceId")({
-  head: ({ params }) => {
-    const s = services.find((x) => x.id === Number(params.serviceId));
-    const title = s ? `Book ${s.title} — Smart Service Finder` : "Book service — Smart Service Finder";
-    return {
-      meta: [
-        { title },
-        { name: "description", content: "Book this service on Smart Service Finder." },
-        { name: "robots", content: "noindex" },
-      ],
-    };
-  },
+  head: ({ params }) => ({
+    meta: [
+      {
+        title: `Book Service #${params.serviceId} — Smart Service Finder`,
+      },
+      {
+        name: "description",
+        content: "Book this service on Smart Service Finder.",
+      },
+    ],
+  }),
+
   component: BookingPage,
   notFoundComponent: () => (
     <div className="ssf-error-wrap">
@@ -44,16 +47,46 @@ function BookingPage() {
   const { serviceId } = useParams({ from: "/booking/$serviceId" });
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
+  const [service, setService] = useState<any>(null);
+  const [provider, setProvider] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  
 
-  const service = useMemo(
-    () => services.find((s) => s.id === Number(serviceId)),
-    [serviceId],
-  );
-  const provider = useMemo(
-    () => (service ? providers.find((p) => p.id === service.providerId) : undefined),
-    [service],
-  );
+  const loadService = async () => {
+    console.log("serviceId =", serviceId);
+    try {
+      const serviceData = await serviceApi.byId(serviceId);
+      setService(serviceData);
+      console.log("serviceData =", serviceData);
 
+      if (serviceData?.providerId) {
+        const providerData = await providerApi.byId(serviceData.providerId);
+        setProvider(providerData);
+      }
+      if (serviceData?.providerId) {
+        const providerData = await providerApi.byId(serviceData.providerId);
+        setProvider(providerData);
+
+        const reviewData = await reviewApi.byProvider(
+          serviceData.providerId
+        );
+
+        setReviews(reviewData);
+      }
+    } 
+    catch (err) {
+      console.error(err);
+      setError("Failed to load service");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadService();
+  }, [serviceId]);
+  
   const today = new Date().toISOString().slice(0, 10);
   const [form, setForm] = useState<FormState>({
     bookingDate: "",
@@ -64,6 +97,14 @@ function BookingPage() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitting, setSubmitting] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [reviews, setReviews] = useState<any[]>([]);
+
+  const avgRating = reviews.length
+  ? (
+      reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+    ).toFixed(1)
+  : "0.0";
+  
 
   if (!service) {
     return (
@@ -131,6 +172,22 @@ function BookingPage() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="container py-5">
+        <h4>Loading services ...</h4>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container py-5">
+        <h4>{error}</h4>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="ssf-detail-hero">
@@ -180,6 +237,7 @@ function BookingPage() {
                       />
                       {errors.bookingDate && <div className="invalid-feedback">{errors.bookingDate}</div>}
                     </div>
+                    
                     <div className="col-md-6">
                       <label className="form-label d-flex align-items-center gap-2">
                         <Clock size={14} /> Booking time
@@ -259,14 +317,15 @@ function BookingPage() {
                     <h6 className="mb-2">Provider</h6>
                     <div className="d-flex align-items-center gap-3 mb-2">
                       <div className="ssf-avatar">
-                        {provider.businessName.split(" ").map((w) => w[0]).slice(0, 2).join("")}
+                        {provider.businessName.split(" ").map((w : string) => w[0]).slice(0, 2).join("")}
                       </div>
                       <div>
                         <div className="fw-bold">{provider.businessName}</div>
                         <div className="ssf-stars">
                           <Star size={14} fill="#fbbf24" stroke="#fbbf24" />
-                          <span className="ms-1 small text-dark fw-semibold">{provider.rating}</span>
-                          <span className="ms-1 small text-secondary">({provider.reviewCount})</span>
+                          <span className="ms-1 small text-dark fw-semibold">
+                            {avgRating}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -277,7 +336,6 @@ function BookingPage() {
                     >View provider</Link>
                   </>
                 )}
-
                 <hr className="my-3" />
                 <Link to="/user/bookings" className="btn btn-ssf-ghost btn-sm w-100">
                   My bookings

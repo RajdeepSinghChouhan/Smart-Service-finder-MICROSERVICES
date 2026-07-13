@@ -14,6 +14,20 @@ function MyServices() {
   const [services, setServices] = useState<Service[]>([]);
   const [toDelete, setToDelete] = useState<Service | null>(null);
 
+  const [loading, setLoading] = useState(true);
+
+  const formatDateTime = (dateString: string) => {
+    return new Date(dateString).toLocaleString("en-IN", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
   useEffect(() => {
     fetchServices();
   }, []);
@@ -23,10 +37,10 @@ function MyServices() {
     if (!toDelete) return;
 
     try {
-      await serviceApi.remove(toDelete.id);
+      await serviceApi.remove(toDelete.serviceId);
 
       setServices((arr) =>
-        arr.filter((s) => s.id !== toDelete.id)
+        arr.filter((s) => s.serviceId !== toDelete.serviceId)
       );
 
       toast.success("Service deleted");
@@ -51,8 +65,13 @@ function MyServices() {
 
       console.error(error);
       toast.error("Failed to load services");
-    }
+    }finally {
+    setLoading(false);
+  }
   };
+  if (loading) {
+    return <div>Loading services...</div>;
+  }
 
   return (
     <div>
@@ -72,16 +91,29 @@ function MyServices() {
       ) : (
         <div className="row g-3">
           {services.map((s) => (
-            <div className="col-md-6 col-lg-4" key={s.id}>
+            <div className="col-md-6 col-lg-4" key={s.serviceId}>
               <div className="ssf-card h-100 p-3 d-flex flex-column">
                 <div className="d-flex justify-content-between align-items-start gap-2">
                   <h6 className="mb-1">{s.title}</h6>
-                  <span className={`ssf-status ${s.available ? "confirmed" : "cancelled"}`}>
-                    {s.available ? "Available" : "Unavailable"}
-                  </span>
+                  <div className="d-flex gap-2">
+                    <span className={`ssf-status ${s.available ? "accepted" : "cancelled"}`}>
+                      {s.available ? "Available" : "Unavailable"}
+                    </span>
+                    {s.verified && (
+                      <span className="ssf-status accepted">
+                        Verified
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div className="small text-secondary mb-2">Category #{s.categoryId} · Created {s.createdAt}</div>
+                <div className="small text-secondary mb-2">CategoryId: {s.categoryId} · Created {formatDateTime(s.createdAt)}</div>
                 <p className="small mb-3">{s.description}</p>
+                <div className="small text-secondary mb-2">
+                  Experience: {s.experience} years
+                </div>
+                <div className="small text-secondary">
+                  {s.businessName}
+                </div>
                 <div className="mt-auto d-flex justify-content-between align-items-center">
                   <div className="fw-bold" style={{ color: "var(--ssf-primary-light)" }}>₹{s.price}</div>
                   <button className="btn btn-sm btn-outline-danger" onClick={() => setToDelete(s)}>

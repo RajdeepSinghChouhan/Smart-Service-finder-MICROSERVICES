@@ -17,9 +17,13 @@ public class BookingCreatedEvent {
     private Long bookingId;
 
     private Long userId;
+    
+    private String email;
 
     private String title;
 
+    private Long providerId;
+    
     private String message;
 
 }

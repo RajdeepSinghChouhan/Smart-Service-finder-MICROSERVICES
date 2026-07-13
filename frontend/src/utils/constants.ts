@@ -19,7 +19,7 @@ export const ROLES = {
 
 export const BOOKING_STATUS = {
   PENDING: "PENDING",
-  CONFIRMED: "CONFIRMED",
+  ACCEPTED: "ACCEPTED",
   COMPLETED: "COMPLETED",
   REJECTED: "REJECTED",
   CANCELLED: "CANCELLED",
@@ -51,6 +51,8 @@ export const API_PATHS = {
     update: "/provider/data",
     delete: "/provider/data",
     getId: "/provider/getId",
+    all: "/provider/all",
+    byId: (id: number | string) => `/provider/data/${id}`,
   },
   service: {
     create: "/services/data",
@@ -71,14 +73,14 @@ export const API_PATHS = {
     completed: (id: number | string) => `/booking/${id}/completed`,
   },
   review: {
-    create: "/review/data",
-    byProvider: (id: number | string) => `/review/provider/${id}`,
-    mine: "/review/my",
-    byService: (id: number | string) => `/review/service/${id}`,
-    update: (id: number | string) => `/review/update/${id}`,
-    delete: (id: number | string) => `/review/delete/${id}`,
-    avg: (id: number | string) => `/review/provider/${id}/average-rating`,
-    count: (id: number | string) => `/review/provider/${id}/count`,
+    create: "/reviews/data",
+    byProvider: (id: number | string) => `/reviews/provider/${id}`,
+    mine: "/reviews/my",
+    byService: (id: number | string) => `/reviews/service/${id}`,
+    update: (id: number | string) => `/reviews/update/${id}`,
+    delete: (id: number | string) => `/reviews/delete/${id}`,
+    avg: (id: number | string) => `/reviews/provider/${id}/average-rating`,
+    count: (id: number | string) => `/reviews/provider/${id}/count`,
   },
   notification: {
     list: (userId: number | string) => `/notifications/user/${userId}`,

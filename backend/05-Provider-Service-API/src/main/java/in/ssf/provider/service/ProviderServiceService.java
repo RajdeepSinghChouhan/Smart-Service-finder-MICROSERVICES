@@ -1,5 +1,9 @@
 package in.ssf.provider.service;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -116,6 +120,17 @@ public class ProviderServiceService {
 		return mapObjectToDto(provider);
 		
 	}
+
+	public ProviderServiceDto getProviderById(Long id)
+	{
+		ProviderService provider = providerRepo.findById(id)
+				.orElseThrow(
+						()->
+						new ProviderNotFound("Provider not found for id : " + id)
+						);
+		
+		return mapObjectToDto(provider);
+	}
 	
 	//Send Provider Data
 	public Long getProviderId(Long userId)
@@ -129,19 +144,44 @@ public class ProviderServiceService {
 		return provider.getId();
 	}
 
-	public ProviderServiceDto mapObjectToDto(ProviderService dto)
+	public ProviderServiceDto mapObjectToDto(ProviderService save)
 	{
-		ProviderServiceDto providerServiceDto = new ProviderServiceDto();
+		ProviderServiceDto dto = new ProviderServiceDto();
 		
-		ProviderService save = providerRepo.save(dto);
-		providerServiceDto.setBusinessName(save.getBusinessName());
-		providerServiceDto.setCategoryId(save.getCategoryId());
-		providerServiceDto.setDescription(save.getDescription());
-		providerServiceDto.setExperience(save.getExperience());
-		providerServiceDto.setRating(save.getRating());
-		providerServiceDto.setUserId(save.getUserId());
-		providerServiceDto.setVerified(save.getVerified());
+		dto.setId(save.getId());
+		dto.setBusinessName(save.getBusinessName());
+		dto.setCategoryId(save.getCategoryId());
+		dto.setDescription(save.getDescription());
+		dto.setExperience(save.getExperience());
+		dto.setRating(save.getRating());
+		dto.setUserId(save.getUserId());
+		dto.setVerified(save.getVerified());
 		
-		return providerServiceDto;
+		return dto;
+	}
+	
+	public List<ProviderServiceDto> getAllProviders() 
+	{
+	    List<ProviderService> all = providerRepo.findAll();
+	    
+	    List<ProviderServiceDto> dtoList = new ArrayList<>();
+	    
+	    for(ProviderService providerService : all)
+	    {
+	    		ProviderServiceDto dto = mapObjectToDto(providerService);
+	    		dtoList.add(dto);
+	    }
+	    return dtoList;
+	}
+	
+	public Long getUserId(Long providerid)
+	{
+		ProviderService provider = providerRepo.findById(providerid)
+							.orElseThrow(
+									()->
+									new ProviderNotFound("Provider not found with provider id: " + providerid)
+									);
+		
+		return provider.getUserId();
 	}
 }

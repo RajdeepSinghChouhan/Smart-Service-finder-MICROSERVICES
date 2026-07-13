@@ -39,7 +39,7 @@ public class ProviderServiceDto {
 
     @NotNull
     @Schema(description = "Category Id Of the Service", example = "301")
-    private Integer categoryId;
+    private Long categoryId;
 
     @DecimalMin("0.0")
     @DecimalMax("5.0")
