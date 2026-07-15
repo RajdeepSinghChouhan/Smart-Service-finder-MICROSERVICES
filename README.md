@@ -25,7 +25,7 @@ https://smart-service-finder-frontend.vercel.app/
 
 ### Backend Repository
 
-https://github.com/RajdeepSinghChouhan/Smart-Service-finder-MICROSERVICES
+https://github.com/RajdeepSinghChouhan/Smart-Service-finder-MICROSERVICES/backend
 
 ### Docker Hub
 
