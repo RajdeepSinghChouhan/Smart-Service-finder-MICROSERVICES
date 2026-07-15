@@ -260,7 +260,6 @@ function ServiceCardHome({ service }: { service: typeof services[number] }) {
     <div className="ssf-card">
       <div className="ssf-card-body">
         <div className="d-flex justify-content-between align-items-start mb-2">
-          <span className="ssf-badge ssf-badge-price">{service.categoryName}</span>
           <span className={`ssf-badge ${service.available ? "ssf-badge-available" : "ssf-badge-unavailable"}`}>
             {service.available ? "Available" : "Unavailable"}
           </span>
@@ -272,8 +271,8 @@ function ServiceCardHome({ service }: { service: typeof services[number] }) {
           <div className="ssf-stars"><Star size={14} fill="#fbbf24" stroke="#fbbf24" /> <span className="ms-1 small fw-semibold text-dark">4.8</span></div>
         </div>
         <div className="d-flex gap-2">
-          <Link to="/service/$id" params={{ id: String(service.id) }} className="btn btn-ssf-ghost flex-fill">Details</Link>
-          <Link to="/service/$id" params={{ id: String(service.id) }} className="btn btn-ssf-primary flex-fill">Book Now</Link>
+          <Link to="/services" className="btn btn-ssf-ghost flex-fill">Details</Link>
+          <Link to="/services" className="btn btn-ssf-primary flex-fill">Book Now</Link>
         </div>
       </div>
     </div>

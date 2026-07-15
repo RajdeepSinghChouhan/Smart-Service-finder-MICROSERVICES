@@ -78,12 +78,17 @@ function ProviderDetailPage() {
                       <div className="col-md-6" key={s.id}>
                         <div className="ssf-card">
                           <div className="ssf-card-body">
-                            <span className="ssf-badge ssf-badge-price mb-2">{s.categoryName}</span>
                             <h6 className="ssf-card-title">{s.title}</h6>
                             <p className="ssf-card-text">{s.description.slice(0, 80)}…</p>
                             <div className="d-flex justify-content-between align-items-center">
                               <strong style={{ color: "var(--ssf-primary)" }}>₹{s.price.toLocaleString()}</strong>
-                              <Link to="/service/$id" params={{ id: String(s.id) }} className="btn btn-ssf-outline btn-sm">View <ArrowRight size={12} /></Link>
+                              <Link
+                                  to="/service/$id"
+                                  params={{ id: String(s.id) }}
+                                  className="btn btn-ssf-outline btn-sm"
+                                >
+                                  View <ArrowRight size={12} />
+                              </Link>
                             </div>
                           </div>
                         </div>
@@ -132,7 +137,6 @@ function ProviderDetailPage() {
                   <span className="text-secondary">Services</span>
                   <strong>{providerServices.length}</strong>
                 </div>
-                <Link to="/services" className="btn btn-ssf-primary w-100 mb-2">Book a Service</Link>
                 <Link to="/login" className="btn btn-ssf-ghost w-100">Login to contact</Link>
               </div>
             </aside>

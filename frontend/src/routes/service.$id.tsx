@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 
 import { serviceApi } from "../api/serviceApi";
 import { providerApi } from "../api/providerApi";
+import { providers as mockProviders } from "../data/mock";
+import { services as mockServices } from "../data/mock";
+import { reviews as mockReviews } from "../data/mock";
 import { reviewApi } from "../api/reviewApi";
 
 export const Route = createFileRoute("/service/$id")({
@@ -43,48 +46,39 @@ function ServiceDetailPage() {
   }, [id]);
 
   const fetchData = async () => {
-    try {
+    try 
+    {
       setLoading(true);
       setError("");
 
       // 1. Get Service
       const serviceData = await serviceApi.byId(id);
 
+      if (!serviceData) {
+        setError("Service not found");
+        return;
+      }
       setService(serviceData);
 
       ///fetch review count
-      const count = await reviewApi.count(
-        serviceData.providerId
-      );
-
+      const count = await reviewApi.count(serviceData.providerId);
       setReviewCount(count);
+    
 
       // 2. Get Reviews
-      try {
-        const reviewsData = await reviewApi.byService(id);
-        setServiceReviews(reviewsData || []);
-      } catch (reviewError) {
-        console.error("Reviews Error:", reviewError);
-      }
+      const reviewsData = await reviewApi.byService(id);
+      setServiceReviews(reviewsData || []);
 
       // 3. Get Provider
-      if (serviceData?.providerId) {
-        try {
-          const providerData = await providerApi.byId(
-            serviceData.providerId
-          );
+      const providerData = await providerApi.byId(serviceData.providerId);
 
-          setProvider(providerData);
+      setProvider(providerData);
 
-          const rating = await reviewApi.averageRating(
-            serviceData.providerId
-          );
+       
+      const rating = await reviewApi.averageRating(serviceData.providerId);
 
-          setAvgRating(Number(rating || 0).toFixed(1));
-        } catch (error) {
-          console.error("Provider/Rating Error:", error);
-        }
-      }
+      setAvgRating(Number(rating || 0).toFixed(1));
+      
     } catch (err) {
       console.error(err);
       setError("Failed to load service");
@@ -207,7 +201,11 @@ function ServiceDetailPage() {
                 <div className="display-6 fw-bold mb-3" style={{ color: "var(--ssf-primary)" }}>₹{service.price.toLocaleString()}</div>
                 <Link
                   to="/booking/$serviceId"
-                  params={{ serviceId: String(service.id) }}
+                  params={{
+                    serviceId: String(
+                      service.id
+                    ),
+                  }}
                   className={`btn btn-ssf-primary w-100 mb-2 ${!service.available ? "disabled" : ""}`}
                 >
                   {service.available ? "Book Service" : "Currently Unavailable"}

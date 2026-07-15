@@ -69,6 +69,11 @@ function ProviderHome() {
             reviewApi.byProvider(providerId),
           ]);
           
+          console.log("providerId", providerId);
+          console.log("services", serviceData);
+          console.log("bookings", bookingData);
+          console.log("reviews", reviewData);
+          
           setServices(serviceData);
           setBookings(bookingData);
           setReviews(reviewData);
